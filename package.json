@@ -1,0 +1,17 @@
+{
+  "name": "vdcoder.com",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/vdcoder/vdcoder.com.git",
+  "author": "Victor Diaz <vdcoder@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "yarn workspace nextjs dev",
+    "prestart": "yarn workspace nextjs build",
+    "start": "yarn workspace nextjs start"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
