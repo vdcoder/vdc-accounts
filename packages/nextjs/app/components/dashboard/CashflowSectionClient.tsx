@@ -230,7 +230,21 @@ function formatCurrency(v: number) {
   return v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-function Th({ children, sticky, left, width, className = '', ...rest }: any) {
+function Th({
+  children,
+  sticky,
+  left,
+  width,
+  className = '',
+  ...rest
+}: {
+  children?: React.ReactNode;
+  sticky?: boolean;
+  left?: boolean;
+  width?: number;
+  className?: string;
+  [key: string]: unknown;
+}) {
   return (
     <th
       {...rest}

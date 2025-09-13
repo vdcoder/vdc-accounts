@@ -10,7 +10,7 @@ export async function GET() {
        ORDER BY id DESC`
     );
     return NextResponse.json(rows);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error fetching accounts:', err);
     return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: 500 });
   }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       [name, email, username, password, website || null, notes || null, status || 'active']
     );
     return NextResponse.json(result.rows[0]);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error creating account:', err);
     return NextResponse.json({ error: 'Failed to create account' }, { status: 500 });
   }
