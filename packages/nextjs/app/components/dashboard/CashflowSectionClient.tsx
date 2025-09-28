@@ -319,7 +319,7 @@ function Row({ label, data, highlight, bold }: { label: string; data: string[]; 
           className="text-right px-2 py-1 text-[11px] border-b border-foreground/5 tabular-nums"
           style={{
             background: colorFor(highlight, v),
-            color: colorTextFor(highlight, v),
+            color: colorTextFor(highlight, v) || undefined,
             minWidth: 70
           }}
         >
@@ -349,18 +349,17 @@ function SectionRow({ label, colSpan }: { label: string; colSpan: number }) {
 
 function colorFor(type?: string, value?: string) {
   if (!type || !value) return 'transparent';
-  if (type === 'income') return '#e8f9f0';
-  if (type === 'charges') return '#fff1f1';
-  if (type === 'net') return '#f5f7ff';
+  if (type === 'income') return 'var(--hl-income)';
+  if (type === 'charges') return 'var(--hl-charges)';
+  if (type === 'net') return 'var(--hl-net)';
   return 'transparent';
 }
 
-function colorTextFor(type?: string, value?: string) {
-  if (!type || !value) return '#222';
-  if (type === 'income') return '#0d6638';
-  if (type === 'charges') return '#992a2a';
-  if (type === 'net') return '#1b2d6b';
-  return '#222';
+function colorTextFor(type?: string, value?: string): string | undefined {
+  // Use default theme text color for readability; don't force a color unless needed.
+  // If you want colored text per type, add it here, but default is inherit.
+  if (!type || !value) return undefined;
+  return undefined;
 }
 
 function Header({ anchorMonth, onShift }: { anchorMonth: Date; onShift: (d: number) => void }) {
@@ -406,7 +405,23 @@ const btnStyle: React.CSSProperties = {
 function StyleTag() {
   return (
     <style>{`
-      :root { --row-h: 38px; --grid-border: rgba(0,0,0,0.28); }
+      :root {
+        --row-h: 38px;
+        --grid-border: rgba(0,0,0,0.28);
+        /* Light theme highlight backgrounds */
+        --hl-income: #e8f9f0;
+        --hl-charges: #fff1f1;
+        --hl-net: #f5f7ff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          /* Subtle tints suitable for dark backgrounds */
+          --grid-border: rgba(255,255,255,0.2);
+          --hl-income: rgba(16, 185, 129, 0.18); /* emerald-500 @ ~18% */
+          --hl-charges: rgba(239, 68, 68, 0.22); /* red-500 @ ~22% */
+          --hl-net: rgba(59, 130, 246, 0.20);    /* blue-500 @ ~20% */
+        }
+      }
       .cashflow-grid { border: 1px solid var(--grid-border); }
       .cashflow-grid th, .cashflow-grid td { border-color: var(--grid-border) !important; }
       .cashflow-grid thead th, .cashflow-grid tbody td { border-bottom: 1px solid var(--grid-border); }

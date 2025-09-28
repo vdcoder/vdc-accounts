@@ -3,8 +3,8 @@ import { Pool } from 'pg';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const DATABASE_URL_DB_POSTGRES = process.env.DATABASE_URL?.replaceAll('/railway', '/postgres');
-console.log('Database URL Railway:', process.env.DATABASE_URL);
-console.log('Database URL:', DATABASE_URL_DB_POSTGRES);
+// console.log('Database URL Railway:', process.env.DATABASE_URL);
+// console.log('Database URL:', DATABASE_URL_DB_POSTGRES);
 
 const pool = new Pool({
   connectionString: DATABASE_URL_DB_POSTGRES, // Adjust for Railway
