@@ -18,17 +18,26 @@ export default function CashflowClient({ adjustments, error }: Props) {
   const startingBalance = 10000; // TODO: fetch per account or aggregate if needed
 
   // Expand DB recurrent adjustments into a normalized structure similar to previous mock data.
-  // Supported frecuency values assumed: 'MONTHLY', 'WEEKLY', 'DAILY'. Case-insensitive.
-  const normalized = useMemo(() => {
-    return adjustments.map(a => ({
-      id: a.id,
-      label: a.label || `#${a.id}`,
-      value: parseFloat(a.value),
-      frequency: (a.frecuency || '').toUpperCase(),
-      startedOn: new Date(a.started_on),
-      status: a.status || 'ACTIVE'
-    }));
-  }, [adjustments]);
+  // Supported frecuency values assumed: DAILY, WEEKLY, BIWEEKLY/FORTNIGHTLY, MONTHLY, YEARLY (case-insensitive).
+    const normalized = useMemo(() => {
+      return adjustments.map(a => {
+        const freq = (a.frecuency || '').toUpperCase().replace(/[^A-Z]/g, '');
+        // Parse dates at local midnight to avoid UTC offset shifting days
+        const startedOn = parseLocalDate(a.started_on);
+        const endedOn = a.ended_on ? parseLocalDate(a.ended_on) : undefined;
+        return {
+          id: a.id,
+          label: a.label || `#${a.id}`,
+          value: parseFloat(a.value),
+          frequency: freq, // DAILY, WEEKLY, BIWEEKLY, MONTHLY, ...
+          startedOn,
+          endedOn,
+          status: a.status || 'ACTIVE',
+          accountId: a.account_id,
+          accountName: a.account_name
+        };
+      });
+    }, [adjustments]);
 
   const { dates, dayKeys } = useMemo(() => buildDateRange(anchorMonth), [anchorMonth]);
 
@@ -38,23 +47,42 @@ export default function CashflowClient({ adjustments, error }: Props) {
       const map: Record<string, number> = {};
       dates.forEach(d => {
         if (d < adj.startedOn) return;
+        if (adj.endedOn && d > adj.endedOn) return;
+        const daysDiff = diffInDays(adj.startedOn, d);
         switch (adj.frequency) {
           case 'DAILY':
             map[toKey(d)] = (map[toKey(d)] || 0) + adj.value;
             break;
           case 'WEEKLY':
-            // occurs on same weekday as startedOn
-            if (d.getDay() === adj.startedOn.getDay()) {
+            if (daysDiff % 7 === 0) {
               map[toKey(d)] = (map[toKey(d)] || 0) + adj.value;
             }
             break;
-          case 'MONTHLY':
+          case 'BIWEEKLY':
+          case 'FORTNIGHTLY':
+            if (daysDiff % 14 === 0) {
+              map[toKey(d)] = (map[toKey(d)] || 0) + adj.value;
+            }
+            break;
+          case 'MONTHLY': {
+            // Same day-of-month as startedOn
             if (d.getDate() === adj.startedOn.getDate()) {
               map[toKey(d)] = (map[toKey(d)] || 0) + adj.value;
             }
             break;
+          }
+          case 'YEARLY': {
+            // Same month and day as startedOn
+            if (
+              d.getMonth() === adj.startedOn.getMonth() &&
+              d.getDate() === adj.startedOn.getDate()
+            ) {
+              map[toKey(d)] = (map[toKey(d)] || 0) + adj.value;
+            }
+            break;
+          }
           default:
-            // fallback treat as monthly
+            // Fallback treat as monthly
             if (d.getDate() === adj.startedOn.getDate()) {
               map[toKey(d)] = (map[toKey(d)] || 0) + adj.value;
             }
@@ -166,7 +194,10 @@ export default function CashflowClient({ adjustments, error }: Props) {
               <Th sticky left width={170}></Th>
               {dates.map(d => (
                 <Th key={toKey(d)} data-day-key={toKey(d)}>
-                  {d.getDate()}/{d.getMonth() + 1}
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] leading-none opacity-60">{dowLetter(d)}</span>
+                    <span>{d.getDate()}/{d.getMonth() + 1}</span>
+                  </div>
                 </Th>
               ))}
             </tr>
@@ -178,7 +209,7 @@ export default function CashflowClient({ adjustments, error }: Props) {
             {normalized.map((adj, idx) => (
               <Row
                 key={adj.id}
-                label={adj.label}
+                label={`${adj.label} (${adj.accountName} #${adj.accountId})`}
                 data={dayKeys.map(k => {
                   const v = adjustmentDayMaps[idx][k];
                   return v ? formatCurrency(v) : '';
@@ -228,6 +259,28 @@ function toKey(d: Date) {
 
 function formatCurrency(v: number) {
   return v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function dowLetter(d: Date) {
+  // 0=Sun..6=Sat
+  const letters = ['S','M','T','W','T','F','S'];
+  return letters[d.getDay()];
+}
+
+function parseLocalDate(isoDate: string) {
+  // isoDate expected format 'YYYY-MM-DD'
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+function diffInDays(a: Date, b: Date) {
+  // Compare calendar days ignoring timezones by normalizing to local midnight
+  const aMid = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const bMid = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round((bMid.getTime() - aMid.getTime()) / msPerDay);
 }
 
 function Th({

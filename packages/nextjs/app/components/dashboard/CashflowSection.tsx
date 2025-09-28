@@ -12,14 +12,20 @@ export type RecurrentAdjustment = {
   label: string | null;
   notes: string | null;
   status: string | null;
+  ended_on: string; // ISO date
+
+  account_name: string; // from join
 };
 
 async function getRecurrentAdjustments(): Promise<RecurrentAdjustment[]> {
   const { rows } = await pool.query(
-    `SELECT id, account_id, value_type, value::text, frecuency, started_on::text, entered_on::text, label, notes, status
-     FROM account_recurrent_adjustments
-     WHERE status IS NULL OR status = 'ACTIVE'
-     ORDER BY id DESC`
+    `SELECT 
+        ara.id, ara.account_id, ara.value_type, ara.value::text, ara.frecuency, ara.started_on::text, ara.entered_on::text, ara.label, ara.notes, ara.status, ara.ended_on::text,
+        a.name as account_name
+     FROM account_recurrent_adjustments ara
+     JOIN accounts a ON ara.account_id = a.id
+     WHERE ara.status IS NULL OR ara.status = 'ACTIVE'
+     ORDER BY ara.id DESC`
   );
   return rows;
 }
