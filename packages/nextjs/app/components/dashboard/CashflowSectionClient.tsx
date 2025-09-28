@@ -116,6 +116,15 @@ export default function CashflowClient({ adjustments, error }: Props) {
     return map;
   }, [adjustmentDayMaps, normalized]);
 
+  // Only show columns (days) with any activity (income or outflow present)
+  const visibleDayKeys = useMemo(() => {
+    return dayKeys.filter(k => incomeByDay[k] !== undefined || outflowByDay[k] !== undefined);
+  }, [dayKeys, incomeByDay, outflowByDay]);
+  const visibleDates = useMemo(() => {
+    const set = new Set(visibleDayKeys);
+    return dates.filter(d => set.has(toKey(d)));
+  }, [dates, visibleDayKeys]);
+
   const dailyNet = useMemo(() => {
     const net: Record<string, number> = {};
     dayKeys.forEach(k => {
@@ -167,18 +176,18 @@ export default function CashflowClient({ adjustments, error }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-        {error && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 text-red-600 px-4 py-3 text-sm">
-            {error}
-          </div>
-        )}
-        <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
-              <MdQueryStats className="inline-block" />
-              <span>Cashflow</span>
-            </h2>
-            <Header anchorMonth={anchorMonth} onShift={shiftMonth} />
+      {error && (
+        <div className="rounded-md border border-red-500/30 bg-red-500/10 text-red-600 px-4 py-3 text-sm">
+          {error}
         </div>
+      )}
+      <div className="flex items-center justify-between">
+        <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+          <MdQueryStats className="inline-block" />
+          <span>Cashflow</span>
+        </h2>
+        <Header anchorMonth={anchorMonth} onShift={shiftMonth} />
+      </div>
 
       <div ref={scrollRef} className="relative rounded-xl border border-foreground/10 bg-background/60 backdrop-blur shadow-sm overflow-x-auto">
         <table
@@ -192,7 +201,7 @@ export default function CashflowClient({ adjustments, error }: Props) {
           <thead>
             <tr>
               <Th sticky left width={150}></Th>
-              {dates.map(d => (
+              {visibleDates.map(d => (
                 <Th key={toKey(d)} data-day-key={toKey(d)}>
                   <div className="flex flex-col items-center">
                     <span className="text-[10px] leading-none opacity-60">{dowLetter(d)}</span>
@@ -203,22 +212,22 @@ export default function CashflowClient({ adjustments, error }: Props) {
             </tr>
           </thead>
           <tbody>
-            <Row label="Starting Balance" data={dayKeys.map(k => formatCurrency(startingBalanceByDay[k]))} />
-            <Row label="Total Income" data={dayKeys.map(k => incomeByDay[k] ? formatCurrency(incomeByDay[k]) : '')} highlight="income" />
-            <SectionRow label="Adjustments" colSpan={dates.length + 1} />
+            <Row label="Starting Balance" data={visibleDayKeys.map(k => formatCurrency(startingBalanceByDay[k]))} />
+            <Row label="Total Income" data={visibleDayKeys.map(k => (incomeByDay[k] ? formatCurrency(incomeByDay[k]) : ''))} highlight="income" />
+            <SectionRow label="Adjustments" colSpan={visibleDates.length + 1} />
             {normalized.map((adj, idx) => (
               <Row
                 key={adj.id}
-                label={`${adj.accountName}`}
-                data={dayKeys.map(k => {
+                label={`${adj.label} (${adj.accountName})`}
+                data={visibleDayKeys.map(k => {
                   const v = adjustmentDayMaps[idx][k];
                   return v ? formatCurrency(v) : '';
                 })}
               />
             ))}
-            <Row label="Total Outflow" data={dayKeys.map(k => outflowByDay[k] ? formatCurrency(outflowByDay[k]) : '')} highlight="charges" />
-            <Row label="Daily Net" data={dayKeys.map(k => dailyNet[k] ? formatCurrency(dailyNet[k]) : formatCurrency(0))} highlight="net" bold />
-            <Row label="Ending Balance" data={dayKeys.map(k => formatCurrency(endingBalanceByDay[k]))} bold />
+            <Row label="Total Outflow" data={visibleDayKeys.map(k => (outflowByDay[k] ? formatCurrency(outflowByDay[k]) : ''))} highlight="charges" />
+            <Row label="Daily Net" data={visibleDayKeys.map(k => (dailyNet[k] ? formatCurrency(dailyNet[k]) : formatCurrency(0)))} highlight="net" bold />
+            <Row label="Ending Balance" data={visibleDayKeys.map(k => formatCurrency(endingBalanceByDay[k]))} bold />
           </tbody>
         </table>
       </div>
@@ -301,8 +310,8 @@ function Th({
   return (
     <th
       {...rest}
-      className={`text-left font-medium bg-foreground/5 backdrop-blur text-foreground/70 border-b border-foreground/10 text-[11px] px-2 py-1 whitespace-nowrap ${sticky ? 'sticky top-0 z-20' : ''} ${sticky && left ? 'left-0' : ''} ${className}`}
-      style={{ minWidth: 70, width }}
+      className={`text-left font-medium bg-foreground/5 backdrop-blur text-foreground/70 border-b border-foreground/10 text-[11px] px-1 py-1 whitespace-nowrap ${sticky ? 'sticky top-0 z-20' : ''} ${sticky && left ? 'left-0' : ''} ${className}`}
+      style={{ minWidth: 42, width }}
     >
       {children}
     </th>
@@ -312,17 +321,17 @@ function Th({
 function Row({ label, data, highlight, bold }: { label: string; data: string[]; highlight?: string; bold?: boolean }) {
   return (
     <tr className="hover:bg-primary/5 transition-colors">
-      <td className={`sticky left-0 bg-background/80 backdrop-blur border-r border-foreground/5 px-2 py-1 text-[14px] ${bold ? 'font-semibold' : 'font-medium'} whitespace-nowrap z-10`} style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <td className={`sticky left-0 bg-background/80 backdrop-blur border-r border-foreground/5 px-1 py-1 text-[14px] ${bold ? 'font-semibold' : 'font-medium'} whitespace-nowrap z-10`} style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {label}
       </td>
       {data.map((v, i) => (
         <td
           key={i}
-          className="text-right px-2 py-1 text-[11px] border-b border-foreground/5 tabular-nums"
+          className="text-right px-1 py-1 text-[11px] border-b border-foreground/5 tabular-nums"
           style={{
             background: colorFor(highlight, v),
             color: colorTextFor(highlight, v) || undefined,
-            minWidth: 70
+            minWidth: 42
           }}
         >
           {v}
@@ -429,7 +438,9 @@ function StyleTag() {
       .cashflow-grid thead th, .cashflow-grid tbody td { border-bottom: 1px solid var(--grid-border); }
       .cashflow-grid thead th:not(:last-child), .cashflow-grid tbody td:not(:last-child) { border-right: 1px solid var(--grid-border); }
       .cashflow-grid tbody tr td.border-y-2 { border-top: 2px solid var(--grid-border) !important; border-bottom: 2px solid var(--grid-border) !important; }
-      thead tr th, tbody tr td { height: var(--row-h); vertical-align: middle; }
+      /* Keep header row height as-is; reduce body rows to 60% */
+      thead tr th { height: var(--row-h); vertical-align: middle; }
+      tbody tr td { height: calc(var(--row-h) * 0.6); vertical-align: middle; }
       @media (max-width: 640px) { table { min-width: 600px; } th, td { min-width: 60px !important; padding: 4px 4px !important; } }
       tr:hover td { background-clip: padding-box; }
     `}</style>

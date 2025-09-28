@@ -11,6 +11,8 @@ export type DashboardTab = {
 
 export default function TabsClient({ tabs }: { tabs: DashboardTab[] }) {
   const [active, setActive] = useState(tabs[0]?.key);
+  const activeTab = tabs.find(t => t.key === active);
+  const isCashflow = activeTab?.key === 'cashflow';
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,13 +44,20 @@ export default function TabsClient({ tabs }: { tabs: DashboardTab[] }) {
         })}
       </div>
       <div
-        className="rounded-xl border border-foreground/10 bg-background/60 backdrop-blur shadow-sm p-4"
+        className={`rounded-xl border border-foreground/10 bg-background/60 backdrop-blur shadow-sm p-4 ${isCashflow ? 'breakout' : ''}`}
         style={{ animation: 'fadeIn 0.25s ease' }}
       >
-        {tabs.find(t => t.key === active)?.content}
+        {activeTab?.content}
       </div>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        /* Make content span full viewport width when cashflow tab is active */
+        .breakout {
+          margin-left: calc(50% - 50vw);
+          margin-right: calc(50% - 50vw);
+          width: 100vw;
+          max-width: 100vw;
+        }
       `}</style>
     </div>
   );
