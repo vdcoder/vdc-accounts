@@ -6,6 +6,16 @@ function formatCurrency(v: number) {
   return v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+type DBRow = {
+  value: string;
+  frecuency: string | null;
+  started_on: string | null;
+  ended_on: string | null;
+  status: string | null;
+  label: string; // COALESCE'd to '' in SQL
+  account_name: string;
+};
+
 type AdjItem = {
   label: string;
   freq: string;
@@ -26,7 +36,7 @@ export default async function MonthlyIncomeSection() {
   const items: AdjItem[] = [];
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<DBRow>(
       `SELECT 
          ara.value::text,
          ara.frecuency,
@@ -43,7 +53,7 @@ export default async function MonthlyIncomeSection() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (const r of rows as Array<Record<string, any>>) {
+    for (const r of rows) {
       const value = parseFloat(r.value);
       if (Number.isNaN(value)) continue;
 
