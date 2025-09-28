@@ -5,7 +5,7 @@ import { Pool } from 'pg';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Set this in your .env file
+  connectionString: process.env.DATABASE_URL?.replaceAll('/railway', '/postgres'), // Adjust for Railway
   // Only use SSL in production
   ...(isProduction ? { ssl: { rejectUnauthorized: false } } : {}),
 });
