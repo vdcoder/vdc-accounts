@@ -79,6 +79,7 @@ export default async function MonthlyIncomeSection() {
   }
 
   const netMonthly = incomeMonthly - chargesMonthly;
+  const dailyNet = netMonthly / 30;
 
   return (
     <div className="flex flex-col gap-4">
@@ -99,7 +100,7 @@ export default async function MonthlyIncomeSection() {
       </div>
 
       <div className="relative rounded-xl border border-foreground/10 bg-background/60 backdrop-blur shadow-sm overflow-hidden">
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-4">
             <div className="text-xs uppercase tracking-wide text-foreground/60 mb-1">Avg Monthly Income</div>
             <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(incomeMonthly)}</div>
@@ -111,6 +112,10 @@ export default async function MonthlyIncomeSection() {
           <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-4">
             <div className="text-xs uppercase tracking-wide text-foreground/60 mb-1">Avg Monthly Net</div>
             <div className="text-2xl font-semibold">{formatCurrency(netMonthly)}</div>
+          </div>
+          <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-4">
+            <div className="text-xs uppercase tracking-wide text-foreground/60 mb-1">Avg Daily Net (÷30)</div>
+            <div className="text-2xl font-semibold">{formatCurrency(dailyNet)}</div>
           </div>
         </div>
       </div>
