@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { unstable_noStore as noStore } from 'next/cache';
 import CashflowClient from './CashflowSectionClient';
 
 export type RecurrentAdjustment = {
@@ -18,6 +19,8 @@ export type RecurrentAdjustment = {
 };
 
 async function getRecurrentAdjustments(): Promise<RecurrentAdjustment[]> {
+  // Disable caching so DB changes show up immediately
+  noStore();
   const { rows } = await pool.query(
     `SELECT 
         ara.id, ara.account_id, ara.value_type, ara.value::text, ara.frecuency, ara.started_on::text, ara.entered_on::text, ara.label, ara.notes, ara.status, ara.ended_on::text,

@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { unstable_noStore as noStore } from 'next/cache';
 import { GiMatchTip } from 'react-icons/gi';
 import { TbAdjustmentsDollar } from 'react-icons/tb';
 import { FaListUl, FaThList } from 'react-icons/fa';
@@ -14,6 +15,8 @@ export type Account = {
 };
 
 async function getAccounts(): Promise<Account[]> {
+  // Disable caching so DB changes show up immediately
+  noStore();
   const { rows } = await pool.query(
     `SELECT id, name, email, username, website, notes, status
      FROM accounts
