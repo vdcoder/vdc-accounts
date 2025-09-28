@@ -80,6 +80,16 @@ export default async function MonthlyIncomeSection() {
 
   const netMonthly = incomeMonthly - chargesMonthly;
   const dailyNet = netMonthly / 30;
+  // Sort: positives first (largest to smallest), then negatives (most negative first)
+  const sortedItems = items.slice().sort((a, b) => {
+    const aPos = a.monthlyAvg >= 0;
+    const bPos = b.monthlyAvg >= 0;
+    if (aPos && !bPos) return -1;
+    if (!aPos && bPos) return 1;
+    if (aPos && bPos) return b.monthlyAvg - a.monthlyAvg; // descending for income
+    // both negative: ascending (e.g., -1000 before -50)
+    return a.monthlyAvg - b.monthlyAvg;
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -122,7 +132,7 @@ export default async function MonthlyIncomeSection() {
 
       {/* Per-adjustment contributions: 3 per row on small+ screens */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {items.map((it, idx) => {
+        {sortedItems.map((it, idx) => {
           const isIncome = it.monthlyAvg >= 0;
           const tint = isIncome ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-red-50 dark:bg-red-500/10';
           const border = isIncome ? 'border-emerald-200/60 dark:border-emerald-400/20' : 'border-red-200/60 dark:border-red-400/20';
