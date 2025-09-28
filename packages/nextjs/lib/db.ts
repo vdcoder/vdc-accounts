@@ -1,11 +1,13 @@
 import { Pool } from 'pg';
 
-//console.log('Database URL:', process.env.DATABASE_URL);
-
 const isProduction = process.env.NODE_ENV === 'production';
 
+const DATABASE_URL_DB_POSTGRES = process.env.DATABASE_URL?.replaceAll('/railway', '/postgres');
+console.log('Database URL Railway:', process.env.DATABASE_URL);
+console.log('Database URL:', DATABASE_URL_DB_POSTGRES);
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL?.replaceAll('/railway', '/postgres'), // Adjust for Railway
+  connectionString: DATABASE_URL_DB_POSTGRES, // Adjust for Railway
   // Only use SSL in production
   ...(isProduction ? { ssl: { rejectUnauthorized: false } } : {}),
 });
