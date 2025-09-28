@@ -191,7 +191,7 @@ export default function CashflowClient({ adjustments, error }: Props) {
         >
           <thead>
             <tr>
-              <Th sticky left width={170}></Th>
+              <Th sticky left width={150}></Th>
               {dates.map(d => (
                 <Th key={toKey(d)} data-day-key={toKey(d)}>
                   <div className="flex flex-col items-center">
@@ -209,7 +209,7 @@ export default function CashflowClient({ adjustments, error }: Props) {
             {normalized.map((adj, idx) => (
               <Row
                 key={adj.id}
-                label={`${adj.label} (${adj.accountName} #${adj.accountId})`}
+                label={`${adj.accountName}`}
                 data={dayKeys.map(k => {
                   const v = adjustmentDayMaps[idx][k];
                   return v ? formatCurrency(v) : '';
@@ -312,7 +312,9 @@ function Th({
 function Row({ label, data, highlight, bold }: { label: string; data: string[]; highlight?: string; bold?: boolean }) {
   return (
     <tr className="hover:bg-primary/5 transition-colors">
-      <td className={`sticky left-0 bg-background/80 backdrop-blur border-r border-foreground/5 px-2 py-1 text-[14px] ${bold ? 'font-semibold' : 'font-medium'} whitespace-nowrap z-10`}>{label}</td>
+      <td className={`sticky left-0 bg-background/80 backdrop-blur border-r border-foreground/5 px-2 py-1 text-[14px] ${bold ? 'font-semibold' : 'font-medium'} whitespace-nowrap z-10`} style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {label}
+      </td>
       {data.map((v, i) => (
         <td
           key={i}
